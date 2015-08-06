@@ -6,6 +6,8 @@ import shutil
 import optparse
 import subprocess
 
+sys.path.append(os.getcwd())
+
 parser = optparse.OptionParser()
 parser.add_option('--launch', action='store', type='string', dest='launch', help='Launch regressions')
 parser.add_option('--status', action='store', type='string', dest='status', help='Chech status of regressions')

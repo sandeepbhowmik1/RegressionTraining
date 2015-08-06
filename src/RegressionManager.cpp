@@ -21,6 +21,7 @@
 #include "TMVAMaker.h"
 #include "GBRMaker.h"
 #include "GBRForest.h"
+#include "HybridGBRMaker.h"
 
 
 #include <TSystem.h>
@@ -56,7 +57,7 @@ bool RegressionManager::init(const string& parFileName)
     bool status = true;
 
     // load dictionary in order to be able to read/write GBRForest objects from/to ROOT file
-    gSystem->Load("obj/libDictionary_C.so");
+    //gSystem->Load("obj/libDictionary_C.so");
     // retrieve parameters from parameter file
     status = m_reader.read(parFileName);
 
@@ -156,6 +157,52 @@ bool RegressionManager::makeRegression()
 
             // run regression
             regMaker->run();
+            regMaker->close();
+            delete regMaker;
+        }
+        else if(trainerType=="GBRLikelihoodTrain")
+        {
+            // initialize GBR regression
+            HybridGBRMaker* regMaker = new HybridGBRMaker();
+            status = regMaker->init(it->name,
+                    it->inputFileNames,
+                    it->treeName,
+                    m_reader.outputDirectory(),
+                    it->doCombine
+                    );
+            if(!status)
+                break;
+            // feed with variables
+            string variablesEB = it->variablesEB;
+            string variablesEE = it->variablesEE;
+            string variablesComb = it->variablesComb;
+            vector<string> tokensEB;
+            vector<string> tokensEE;
+            vector<string> tokensComb;
+            tokenize(variablesEB, tokensEB, ":");
+            tokenize(variablesEE, tokensEE, ":");
+            tokenize(variablesComb, tokensComb, ":");
+            vector<string>::iterator itv  = tokensEB.begin();
+            vector<string>::iterator itvE = tokensEB.end();
+            for(;itv!=itvE;++itv)
+                regMaker->addVariableEB(*itv);
+            itv  = tokensEE.begin();
+            itvE = tokensEE.end();
+            for(;itv!=itvE;++itv)
+                regMaker->addVariableEE(*itv);
+            itv  = tokensComb.begin();
+            itvE = tokensComb.end();
+            for(;itv!=itvE;++itv)
+                regMaker->addVariableComb(*itv);
+            tokensEB.clear();
+            tokensEE.clear();
+            tokensComb.clear();
+            // specify target, cuts, fill options
+            regMaker->addTarget(it->target, it->targetComb);
+            //regMaker->prepareTraining(it->cutBase, it->cutComb, it->cutEB, it->cutEE, it->options);
+
+            // run regression
+            regMaker->run(it->cutBase, it->cutComb, it->cutEB, it->cutEE, it->options);
             regMaker->close();
             delete regMaker;
         }

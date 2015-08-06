@@ -11,8 +11,8 @@ UCFLAGS = -O3 -fopenmp -Wall -gstabs+
 #LIBS = -L/afs/cern.ch/sw/lcg/external/root/head/slc4_amd64_gcc34/root/lib -lCore -lCint -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -pthread -lm -ldl -rdynamic 
 #GLIBS = -L/afs/cern.ch/sw/lcg/external/root/head/slc4_amd64_gcc34/root/lib -lCore -lCint -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lGui -pthread -lm -ldl -rdynamic 
 
-RUCFLAGS := $(shell root-config --cflags) -I./include/
-LIBS :=  -lgomp $(shell root-config --libs) -lTreePlayer  -lTMVA 
+RUCFLAGS := $(shell root-config --cflags) -I./include/ -I${CMSSW_BASE}/src/ -I${CMSSW_RELEASE_BASE}/src/ 
+LIBS :=  -lgomp $(shell root-config --libs) -lTreePlayer  -lTMVA -lRooFit -lRooFitCore -L${CMSSW_BASE}/lib/${SCRAM_ARCH} -L${CMSSW_RELEASE_BASE}/lib/${SCRAM_ARCH} -lHiggsAnalysisGBRLikelihood -lCondFormatsEgammaObjects  
 GLIBS := $(shell root-config --glibs)
 
 vpath %.cpp ./src
@@ -21,11 +21,10 @@ SRCPP = main.cpp\
 	Utilities.cpp\
 	GBRApply.cpp\
 	GBREvent.cpp\
-	GBRForest.cpp\
 	GBRTrainer.cpp\
-	GBRTree.cpp\
 	TMVAMaker.cpp\
 	GBRMaker.cpp\
+	HybridGBRMaker.cpp\
 	ParReader.cpp\
 	RegressionManager.cpp\
 	SmearingCorrection.cpp\
@@ -39,7 +38,8 @@ SRCPP = main.cpp\
 OBJCPP = $(patsubst %.cpp,obj/%.o,$(SRCPP))
 
 
-all : regression.exe obj/libDictionary_C.so
+all : regression.exe 
+	#obj/libDictionary_C.so
 
 obj/%.o : %.cpp
 	@echo "> compiling $*"
@@ -60,7 +60,7 @@ cleanall: clean
 	@echo "> Cleaning executable"
 	@rm -f regression.exe
 
-obj/libDictionary_C.so: ./include/libDictionary.C
-	@echo "> Generating dictionary"
-	@cd include && root -b -q libDictionary.C++
-	@mv ./include/libDictionary_C.so ./obj/
+#obj/libDictionary_C.so: ./include/libDictionary.C
+	#@echo "> Generating dictionary"
+	#@cd include && root -b -q libDictionary.C++
+	#@mv ./include/libDictionary_C.so ./obj/

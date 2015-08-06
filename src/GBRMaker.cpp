@@ -20,7 +20,7 @@
 #include "GBRMaker.h"
 #include "Utilities.h"
 #include "GBRTrainer.h"
-#include "GBRForest.h"
+#include "CondFormats/EgammaObjects/interface/GBRForest.h"
 #include "GBRApply.h"
 #include "VariableCorrectionApply.h"
 #include "SmearingCorrection.h"

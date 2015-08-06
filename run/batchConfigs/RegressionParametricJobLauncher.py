@@ -13,8 +13,8 @@ from Regression import Regression
 class RegressionParametricJobLauncher:
     def __init__(self):
         self.baseDir = "/home/llr/cms/sauvan/RegressionTraining/"
-        self.exe = self.baseDir+"/regression.exe"
-        self.dictionary = self.baseDir+"/obj/libDictionary_C.so"
+        self.exe = "regression.exe"
+        self.libs = []
         self.includeDir = self.baseDir+"/include/"
         self.srcDir = self.baseDir+"/src/"
         self.trainerType = "GBRTrain"
@@ -114,6 +114,9 @@ class RegressionParametricJobLauncher:
         reg.cutsComb = copy.copy(self.commonCutsComb)
         self.regressions[name] = reg
 
+    def doCombination(self, name, combine):
+        self.regressions[name].doCombine = combine
+
     def addTrainingOptions(self, name, options):
         self.regressions[name].tmvaTrainingOptions.extend(options)
 
@@ -140,19 +143,24 @@ class RegressionParametricJobLauncher:
 
 
     def addCutsEB(self, name, cuts):
-        self.regressions[name].cutsEB.extend(cuts)
+        if len(cuts)>0:
+            self.regressions[name].cutsEB.extend(cuts)
 
     def addCutsEE(self, name, cuts):
-        self.regressions[name].cutsEE.extend(cuts)
+        if len(cuts)>0:
+            self.regressions[name].cutsEE.extend(cuts)
 
     def addCutsComb(self, name, cuts):
-        self.regressions[name].cutsComb.extend(cuts)
+        if len(cuts)>0:
+            self.regressions[name].cutsComb.extend(cuts)
 
     def addCuts(self, name, cuts):
-        self.regressions[name].cuts.extend(cuts)
+        if len(cuts)>0:
+            self.regressions[name].cuts.extend(cuts)
 
     def addCutsError(self, name, cuts):
-        self.regressions[name].cutsError.extend(cuts)
+        if len(cuts)>0:
+            self.regressions[name].cutsError.extend(cuts)
 
     def setInputTree(self, name, tree):
         self.regressions[name].tree = tree
@@ -168,12 +176,14 @@ class RegressionParametricJobLauncher:
 
     def prepareArea(self):
         ### perform some checks
-        if not os.path.isfile(self.exe):
-            raise StandardError("ERROR: cannot find regression executable")
-        if not os.path.isfile(self.dictionary):
-            raise StandardError("ERROR: cannot find ROOT dictionary")
-        if not (stat.S_IXUSR & os.stat(self.exe)[stat.ST_MODE]):
-            raise StandardError("ERROR: you don't have exe permission for "+self.exe)
+        fullPathExe = self.baseDir+"/"+self.exe
+        if not os.path.isfile(fullPathExe):
+            raise StandardError("ERROR: cannot find regression executable {0}".format(fullPathExe))
+        for lib in self.libs:
+            if not os.path.isfile(lib):
+                raise StandardError("ERROR: cannot find library {}".format(lib))
+        if not (stat.S_IXUSR & os.stat(fullPathExe)[stat.ST_MODE]):
+            raise StandardError("ERROR: you don't have exe permission for "+fullPathExe)
         for inFile in self.inputFiles:
             if not os.path.isfile(inFile):
                 raise StandardError("ERROR: cannot find input file "+inFile)
@@ -207,14 +217,15 @@ class RegressionParametricJobLauncher:
                 print >>fConfig, "\n\n"
             jobid += 1
 
-        ### Copy dictionary
-        shutil.copy(self.dictionary, self.outputDirectory+"/"+self.version+"/obj/")
+        ### Copy libraries
+        for lib in self.libs:
+            shutil.copy(lib, self.outputDirectory+"/"+self.version+"/obj/")
 
         ### Copy parameter file
         shutil.copy(self.parameterFile, self.outputDirectory+"/"+self.version+"/"+self.baseName+".py")
 
     def printLaunchedJobs(self):
-        if self.trainerType!="TMVA" and self.trainerType!="GBRTrain":
+        if self.trainerType!="TMVA" and self.trainerType!="GBRTrain" and self.trainerType!="GBRLikelihoodTrain":
             raise StandardError("ERROR: Unknown trainer typer "+self.trainerType)
         print "\n>>>>>> You are going to send", len(self.regressions), self.trainerType, "regressions on batch <<<<<<"
         number = 1
@@ -314,19 +325,20 @@ class RegressionParametricJobLauncher:
             #for name,reg in sorted(self.regressions.iteritems()):
             job = ParametricJobsMP("job_"+self.baseName)
             job.nJobs = len(self.regressions.items())
-            job.exe = self.exe
+            job.exe = self.baseDir+"/"+self.exe
             job.parameterFileBaseName = self.baseName+".$jobid.config"
             jobid = 1
             for name,reg in sorted(self.regressions.iteritems()):
                 job.inputFiles.append(self.baseName+"."+str(jobid)+".config")
                 job.parameterFiles.append(self.baseName+"."+str(jobid)+".config")
                 jobid += 1
-            job.libs.append(self.dictionary)
-            job.incl.append(self.includeDir+"/GBRForest.h")
-            job.incl.append(self.includeDir+"/GBRTree.h")
-            job.incl.append(self.includeDir+"/libDictionary.C")
-            job.src.append(self.srcDir+"/GBRForest.cpp")
-            job.src.append(self.srcDir+"/GBRTree.cpp")
+            for lib in self.libs:
+                job.libs.append(lib)
+            #job.incl.append(self.includeDir+"/GBRForest.h")
+            #job.incl.append(self.includeDir+"/GBRTree.h")
+            #job.incl.append(self.includeDir+"/libDictionary.C")
+            #job.src.append(self.srcDir+"/GBRForest.cpp")
+            #job.src.append(self.srcDir+"/GBRTree.cpp")
             job.creatingDict = False
             job.outputDir = self.outputDirectory+"/"+self.version
             job.checkParams()

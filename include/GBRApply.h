@@ -32,6 +32,7 @@
 #include <stdio.h>
 
   class GBRForest;
+  class GBRForestD;
   class TTree;
   class ICorrection;
   
@@ -48,6 +49,13 @@
                const std::string& cutEB, const std::string& cutEE,
                std::string targetname="target",
                const ICorrection* correction=NULL) const;
+
+       TTree *ApplyAsFriendTransform(TTree *intree,
+               const GBRForestD *forestEB, const GBRForestD *forestEE,
+               const std::vector<std::string> &varsEB, const std::vector<std::string> &varsEE,
+               const std::string& cutEB, const std::string& cutEE,
+               std::string targetname,
+               double low, double high) const;
        
     protected:
       

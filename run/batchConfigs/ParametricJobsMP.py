@@ -22,6 +22,8 @@ class ParametricJobsMP:
         self.outputDir = ""
         self.currentDir = os.getcwd()
         self.args = []
+        self.cmsswRel   = os.environ["CMSSW_VERSION"]
+        self.scram_arch = os.environ["SCRAM_ARCH"]
 
     def checkParams(self):
         if not os.path.isfile(self.exe):
@@ -77,12 +79,14 @@ class ParametricJobsMP:
             print >>script, "uname -a"
             print >>script, "\necho '\n-- Running parametric job $jobid'"
             print >>script, "\necho '\n-- Setting up cms environment'"
-            print >>script, "export SCRAM_ARCH=slc5_amd64_gcc462"
-            print >>script, "source /opt/exp_soft/cms/cmsset_default.sh"
-            print >>script, "cmsrel CMSSW_5_3_5"
-            print >>script, "cd CMSSW_5_3_5/src"
+            print >>script, "export SCRAM_ARCH={}".format(self.scram_arch) 
+            #print >>script, "source /opt/exp_soft/cms/cmsset_default.sh"
+            print >>script, "source /cvmfs/cms.cern.ch/cmsset_default.sh "
+            print >>script, "cmsrel {}".format(self.cmsswRel)
+            print >>script, "cd {}/src".format(self.cmsswRel)
             print >>script, "cmsenv"
             print >>script, "cd -"
+            print >>script, "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:`pwd`/obj/"
             if self.creatingDict:
                 print >>script, "\necho '\n-- Creating ROOT dictionary'"
                 print >>script, "cd include"
@@ -93,7 +97,7 @@ class ParametricJobsMP:
             print >>script, "\necho '\n-- Executing job'"
             print >>script, "chmod +x "+os.path.basename(self.exe)
             print >>script, "./"+os.path.basename(self.exe), "jobs/"+self.parameterFileBaseName
-            print >>script, "rm -rf CMSSW_5_3_5"
+            print >>script, "rm -rf {}".format(self.cmsswRel)
             print >>script, "rm -rf obj"
             print >>script, "\necho '\n-- Scratch disk status'"
             print >>script, "ls -ltr"
@@ -102,11 +106,11 @@ class ParametricJobsMP:
     def prepareCommand(self):
         self.args.append("-submit")
         self.args.append("-ce")
-        self.args.append("llrmpicream")
+        self.args.append("llrmpicream.in2p3.fr")
         self.args.append("-mpi")
         self.args.append("12345")
         self.args.append("-queue")
-        self.args.append("llr")
+        self.args.append("gridq")
         self.args.append("-cmd")
         self.args.append("'./"+self.name+".sub'")
         self.args.append("-exe")
