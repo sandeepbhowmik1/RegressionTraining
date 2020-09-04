@@ -171,7 +171,7 @@ bool HybridGBRMaker::init(const string& name,
     TFile* fileOut = TFile::Open(m_fileOutName.c_str(), "RECREATE");
     if(!fileOut || !fileOut->IsOpen())
     {
-        cout<<"FATAL: HybridGBRMaker::init(): Cannot open output file "<<outFileName<<"\n";
+        cout<<"FATAL: HybridGBRMaker::init(): Cannot open output file "<<outFileName.str()<<"\n";
         return false;
     }
     fileOut->Close();

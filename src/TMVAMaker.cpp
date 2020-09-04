@@ -126,7 +126,7 @@ bool TMVAMaker::init(const string& name,
     m_fileOut = TFile::Open(outFileName.str().c_str(), "RECREATE");
     if(!m_fileOut || !m_fileOut->IsOpen())
     {
-        cout<<"FATAL: RegressionMake::init(): Cannot open output file "<<outFileName<<"\n";
+        cout<<"FATAL: RegressionMake::init(): Cannot open output file "<<outFileName.str()<<"\n";
         return false;
     }
     m_fileOut->cd();
